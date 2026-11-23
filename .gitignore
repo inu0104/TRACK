@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+.DS_Store
+
+# datasets are obtained per _datasets/README.md, never committed
+datasets
+
+# run outputs
+results
