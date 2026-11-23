@@ -128,6 +128,54 @@ def load_ellipticpp_wallet(max_day: float = np.inf):
     return ev, acc, y
 
 
+def load_hofinet(max_day: float = np.inf):
+    """HOFINET, a synthetic interbank settlement network from AI Hub.
+
+    AI Hub dataset 71925 (https://www.aihub.or.kr/aihubdata/data/view.do?dataSetSn=71925)
+    is generated to reflect patterns in real electronic fund transfers. Its
+    labels mark anomalous transfers -- new recipient, structuring, late-night
+    bulk -- rather than laundering typologies, but the bag structure is the
+    same: 74.9% of flagged accounts have exactly one flagged transaction.
+
+    Reads the transfer table with its original Korean header, saved as
+    datasets/hofinet/HOFINET.txt (comma-separated, UTF-8).
+    """
+    raw = REPO / "datasets/hofinet/HOFINET.txt"
+    raw_columns = {
+        "거래일자": "date",                   # YYYYMMDD
+        "거래시간대": "hour",                 # 0-23
+        "출금금융회사일련번호": "fb",         # sending institution
+        "출금계좌일련번호": "fa",             # sending account
+        "입금금융회사일련번호": "tb",         # receiving institution
+        "입금계좌일련번호": "ta",             # receiving account
+        "자금구분": "fund",
+        "매체구분": "medium",
+        "거래금액": "amount",
+        "이상거래여부": "flag",
+    }
+    df = pd.read_csv(raw, usecols=list(raw_columns),
+                     dtype={k: "string" for k in list(raw_columns)[2:6]},
+                     encoding="utf-8-sig").rename(columns=raw_columns)
+    dt = pd.to_datetime(df["date"].astype(str), format="%Y%m%d")
+    day = (dt - dt.min()).dt.days + df["hour"] / 24.0
+    keep = day <= max_day
+    df, day = df[keep], day[keep]
+    ev = pd.DataFrame({
+        "source": df["fb"].astype(str) + ":" + df["fa"].astype(str),
+        "target": df["tb"].astype(str) + ":" + df["ta"].astype(str),
+        "t": day.to_numpy() * 24.0,
+        "amount": df["amount"].fillna(0.0).to_numpy(),
+        "flag": df["flag"].to_numpy(),
+        "hour": df["hour"].to_numpy(),
+        "ch1": df["fund"].astype("category").cat.codes.to_numpy(),
+        "ch2": df["medium"].astype("category").cat.codes.to_numpy(),
+    })
+    acc = _account_index(ev)
+    fl = ev[ev.flag == 1]
+    y = acc.isin(set(fl.source) | set(fl.target)).astype(np.int64)
+    return ev, acc, y
+
+
 def load_amlsim(max_day: float = np.inf):
     """AMLSim, the IBM simulator behind much of the earlier AML GNN work.
 
@@ -175,4 +223,5 @@ def load_amlsim(max_day: float = np.inf):
 # unknown/3 encoding is mapped, and the 166 shared features agreeing to 4e-16.
 
 LOADERS = {"amlworld": load_amlworld, "amlnet": load_amlnet,
-           "amlsim": load_amlsim, "ellipticpp": load_ellipticpp_wallet}
+           "amlsim": load_amlsim, "ellipticpp": load_ellipticpp_wallet,
+           "hofinet": load_hofinet}

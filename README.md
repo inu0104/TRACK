@@ -34,8 +34,6 @@ marks the best and underline the second best in each column.
 
 ![Main results](assets/main_table.png)
 
-The paper also reports a non-public interbank network. It is not included here.
-
 ## Setup
 
 ```bash
@@ -54,7 +52,7 @@ command:
 python _datasets/fetch.py      # AMLworld needs a Kaggle token at ~/.kaggle/kaggle.json
 ```
 
-AMLSim and Elliptic++ are downloaded by hand. See
+AMLSim, Elliptic++ and HOFINET are downloaded by hand. See
 [`_datasets/README.md`](_datasets/README.md) for the sources, licences and the
 folder layout the loaders expect.
 
@@ -73,7 +71,7 @@ python run_track.py \
     --device cuda:0
 ```
 
-`--dataset` is one of `amlworld`, `amlnet`, `amlsim`, `ellipticpp`. The other
+`--dataset` is one of `amlworld`, `amlnet`, `amlsim`, `ellipticpp`, `hofinet`. The other
 arguments above are the paper's settings.
 
 - `--split temporal` orders transactions by time and cuts them 60/20/20 into
